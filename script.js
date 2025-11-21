@@ -132,9 +132,73 @@ function loadAdminRecords() {
     table += "</table>";
     document.getElementById("report").innerHTML = table;
 }
+// ------------------------
+// عناصر الأزرار
+// ------------------------
+const checkInBtn = document.getElementById("checkInBtn");
+const checkOutBtn = document.getElementById("checkOutBtn");
 
+// ------------------------
+// 1) عند فتح الصفحة: قراءة البيانات
+// ------------------------
+let savedUser = localStorage.getItem("username");
+let savedIn = localStorage.getItem("checkInTime");
+let savedOut = localStorage.getItem("checkOutTime");
+let savedHours = localStorage.getItem("totalHours");
+
+if (savedUser) {
+    console.log("User:", savedUser);
+    console.log("Last Check In:", savedIn);
+    console.log("Last Check Out:", savedOut);
+    console.log("Total Hours:", savedHours);
+}
+
+// ------------------------
+// 2) عند الضغط على Check In
+// ------------------------
+if (checkInBtn) {
+    checkInBtn.addEventListener("click", () => {
+
+        let username = localStorage.getItem("username"); 
+        let checkInTime = new Date().toISOString();
+
+        localStorage.setItem("checkInTime", checkInTime);
+
+        console.log("تم تسجيل Check In:", checkInTime);
+        alert("Check In تم تسجيله");
+    });
+}
+
+// ------------------------
+// 3) عند الضغط على Check Out + حساب الساعات
+// ------------------------
+if (checkOutBtn) {
+    checkOutBtn.addEventListener("click", () => {
+
+        let checkInTime = localStorage.getItem("checkInTime");
+
+        if (!checkInTime) {
+            alert("لا يوجد Check In مسجل");
+            return;
+        }
+
+        let checkOutTime = new Date().toISOString();
+        localStorage.setItem("checkOutTime", checkOutTime);
+
+        let hours =
+            (new Date(checkOutTime) - new Date(checkInTime)) / 1000 / 60 / 60;
+
+        localStorage.setItem("totalHours", hours.toFixed(2));
+
+        console.log("Check Out:", checkOutTime);
+        console.log("عدد الساعات:", hours.toFixed(2));
+
+        alert("Check Out تم — عدد الساعات: " + hours.toFixed(2));
+    });
+}
 // Logout
 function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
+
 }
