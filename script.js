@@ -132,62 +132,73 @@ function loadAdminRecords() {
     table += "</table>";
     document.getElementById("report").innerHTML = table;
 }
-// ------------------------
+
 // Logout
 function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
 }
-// script.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, set, get, child, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+// ------------------------
+// عناصر الأزرار
+// ------------------------
+const checkInBtn = document.getElementById("checkInBtn");
+const checkOutBtn = document.getElementById("checkOutBtn");
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCzzFxaHqTLDOb7VLI82evWEl9ck1Js5Es",
-  authDomain: "test-12fd5.firebaseapp.com",
-  databaseURL: "https://test-12fd5-default-rtdb.firebaseio.com",
-  projectId: "test-12fd5",
-  storageBucket: "test-12fd5.appspot.com",
-  messagingSenderId: "715807742478",
-  appId: "1:715807742478:web:e787e4fb9e65347400fa5f"
-};
+// ------------------------
+// 1) عند فتح الصفحة: قراءة البيانات
+// ------------------------
+let savedUser = localStorage.getItem("username");
+let savedIn = localStorage.getItem("checkInTime");
+let savedOut = localStorage.getItem("checkOutTime");
+let savedHours = localStorage.getItem("totalHours");
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// =======================
-// Check In function
-// =======================
-window.checkIn = function(username) {
-  const time = new Date().toISOString();
-  navigator.geolocation.getCurrentPosition((pos) => {
-    set(ref(db, 'attendance/' + username), {
-      checkIn: time,
-      checkOut: null,
-      hours: null,
-      location: `${pos.coords.latitude},${pos.coords.longitude}`
-    }).then(() => alert("✔ تم تسجيل Check In"));
-  });
+if (savedUser) {
+    console.log("User:", savedUser);
+    console.log("Last Check In:", savedIn);
+    console.log("Last Check Out:", savedOut);
+    console.log("Total Hours:", savedHours);
 }
 
-// =======================
-// Check Out function
-// =======================
-window.checkOut = function(username) {
-  const dbRef = ref(db);
-  get(child(dbRef, 'attendance/' + username)).then((snapshot) => {
-    if (!snapshot.exists() || !snapshot.val().checkIn) {
-      alert("لا يوجد Check In");
-      return;
-    }
-    const data = snapshot.val();
-    const checkInTime = new Date(data.checkIn);
-    const checkOutTime = new Date();
-    const hours = (checkOutTime - checkInTime) / 1000 / 60 / 60;
+// ------------------------
+// 2) عند الضغط على Check In
+// ------------------------
+if (checkInBtn) {
+    checkInBtn.addEventListener("click", () => {
 
-    update(ref(db, 'attendance/' + username), {
-      checkOut: checkOutTime.toISOString(),
-      hours: hours.toFixed(2)
-    }).then(() => alert("✔ تم Check Out\nعدد الساعات: " + hours.toFixed(2)));
-  });
+        let username = localStorage.getItem("username"); 
+        let checkInTime = new Date().toISOString();
+
+        localStorage.setItem("checkInTime", checkInTime);
+
+        console.log("تم تسجيل Check In:", checkInTime);
+        alert("Check In تم تسجيله");
+    });
+}
+
+// ------------------------
+// 3) عند الضغط على Check Out + حساب الساعات
+// ------------------------
+if (checkOutBtn) {
+    checkOutBtn.addEventListener("click", () => {
+
+        let checkInTime = localStorage.getItem("checkInTime");
+
+        if (!checkInTime) {
+            alert("لا يوجد Check In مسجل");
+            return;
+        }
+
+        let checkOutTime = new Date().toISOString();
+        localStorage.setItem("checkOutTime", checkOutTime);
+
+        let hours =
+            (new Date(checkOutTime) - new Date(checkInTime)) / 1000 / 60 / 60;
+
+        localStorage.setItem("totalHours", hours.toFixed(2));
+
+        console.log("Check Out:", checkOutTime);
+        console.log("عدد الساعات:", hours.toFixed(2));
+
+        alert("Check Out تم — عدد الساعات: " + hours.toFixed(2));
+    });
 }
