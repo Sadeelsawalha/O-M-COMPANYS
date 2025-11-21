@@ -138,91 +138,54 @@ function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
 }
-// --------------------------
-// فتح أو إنشاء قاعدة البيانات
-// --------------------------
-let db;
-let request = indexedDB.open("OM_System_DB", 1);
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getDatabase, ref, set, get, child, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-request.onupgradeneeded = function(e) {
-    db = e.target.result;
-    let store = db.createObjectStore("attendance", { keyPath: "id" });
-};
+  // الصقي هنا firebaseConfig
+  const firebaseConfig = {
+    apiKey: "AIzaSyCzzFxaHqTLDOb7VLI82evWEl9ck1Js5Es",
+    authDomain: "test-12fd5.firebaseapp.com",
+    databaseURL: "https://test-12fd5-default-rtdb.firebaseio.com",
+    projectId: "test-12fd5",
+    storageBucket: "test-12fd5.appspot.com",
+    messagingSenderId: "715807742478",
+    appId: "1:715807742478:web:e787e4fb9e65347400fa5f"
+  };
 
-request.onsuccess = function(e) {
-    db = e.target.result;
-    console.log("IndexedDB جاهزة");
-};
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-request.onerror = function() {
-    console.log("خطأ في فتح IndexedDB");
-};
-
-
-// --------------------------
-// 1) تخزين Data
-// --------------------------
-function saveAttendance(data) {
-    let tx = db.transaction("attendance", "readwrite");
-    let store = tx.objectStore("attendance");
-    store.put({ id: 1, ...data });
-
-    tx.oncomplete = () => console.log("تم التخزين ✔");
-    tx.onerror = () => console.log("فشل التخزين ❌");
-}
-
-
-// --------------------------
-// 2) قراءة البيانات
-// --------------------------
-function loadAttendance(callback) {
-    let tx = db.transaction("attendance", "readonly");
-    let store = tx.objectStore("attendance");
-    let request = store.get(1);
-
-    request.onsuccess = () => callback(request.result);
-    request.onerror = () => callback(null);
-}
-
-
-// --------------------------
-// 3) استخدامه في Check In
-// --------------------------
-function checkIn() {
-    let time = new Date().toISOString();
-
-    saveAttendance({
-        username: localStorage.getItem("username"),
+  // Check In
+  window.checkIn = function(username) {
+    const time = new Date().toISOString();
+    navigator.geolocation.getCurrentPosition((pos) => {
+      set(ref(db, 'attendance/' + username), {
         checkIn: time,
         checkOut: null,
-        totalHours: null
+        hours: null,
+        location: `${pos.coords.latitude},${pos.coords.longitude}`
+      }).then(() => alert("✔ تم تسجيل Check In"));
     });
+  }
 
-    alert("✔ تم تسجيل Check In");
-}
+  // Check Out
+  window.checkOut = function(username) {
+    const dbRef = ref(db);
+    get(child(dbRef, 'attendance/' + username)).then((snapshot) => {
+      if (!snapshot.exists() || !snapshot.val().checkIn) {
+        alert("لا يوجد Check In");
+        return;
+      }
+      const data = snapshot.val();
+      const checkInTime = new Date(data.checkIn);
+      const checkOutTime = new Date();
+      const hours = (checkOutTime - checkInTime) / 1000 / 60 / 60;
 
-
-// --------------------------
-// 4) استخدامه في Check Out + حساب الساعات
-// --------------------------
-function checkOut() {
-    loadAttendance((data) => {
-        if (!data || !data.checkIn) {
-            alert("لا يوجد Check In");
-            return;
-        }
-
-        let checkOutTime = new Date().toISOString();
-        let diff =
-            (new Date(checkOutTime) - new Date(data.checkIn)) / 1000 / 60 / 60;
-
-        saveAttendance({
-            username: data.username,
-            checkIn: data.checkIn,
-            checkOut: checkOutTime,
-            totalHours: diff.toFixed(2)
-        });
-
-        alert("✔ تم Check Out\nعدد الساعات: " + diff.toFixed(2));
+      update(ref(db, 'attendance/' + username), {
+        checkOut: checkOutTime.toISOString(),
+        hours: hours.toFixed(2)
+      }).then(() => alert("✔ تم Check Out\nعدد الساعات: " + hours.toFixed(2)));
     });
-}
+  }
+</script>
