@@ -133,72 +133,96 @@ function loadAdminRecords() {
     document.getElementById("report").innerHTML = table;
 }
 // ------------------------
-// عناصر الأزرار
-// ------------------------
-const checkInBtn = document.getElementById("checkInBtn");
-const checkOutBtn = document.getElementById("checkOutBtn");
-
-// ------------------------
-// 1) عند فتح الصفحة: قراءة البيانات
-// ------------------------
-let savedUser = localStorage.getItem("username");
-let savedIn = localStorage.getItem("checkInTime");
-let savedOut = localStorage.getItem("checkOutTime");
-let savedHours = localStorage.getItem("totalHours");
-
-if (savedUser) {
-    console.log("User:", savedUser);
-    console.log("Last Check In:", savedIn);
-    console.log("Last Check Out:", savedOut);
-    console.log("Total Hours:", savedHours);
-}
-
-// ------------------------
-// 2) عند الضغط على Check In
-// ------------------------
-if (checkInBtn) {
-    checkInBtn.addEventListener("click", () => {
-
-        let username = localStorage.getItem("username"); 
-        let checkInTime = new Date().toISOString();
-
-        localStorage.setItem("checkInTime", checkInTime);
-
-        console.log("تم تسجيل Check In:", checkInTime);
-        alert("Check In تم تسجيله");
-    });
-}
-
-// ------------------------
-// 3) عند الضغط على Check Out + حساب الساعات
-// ------------------------
-if (checkOutBtn) {
-    checkOutBtn.addEventListener("click", () => {
-
-        let checkInTime = localStorage.getItem("checkInTime");
-
-        if (!checkInTime) {
-            alert("لا يوجد Check In مسجل");
-            return;
-        }
-
-        let checkOutTime = new Date().toISOString();
-        localStorage.setItem("checkOutTime", checkOutTime);
-
-        let hours =
-            (new Date(checkOutTime) - new Date(checkInTime)) / 1000 / 60 / 60;
-
-        localStorage.setItem("totalHours", hours.toFixed(2));
-
-        console.log("Check Out:", checkOutTime);
-        console.log("عدد الساعات:", hours.toFixed(2));
-
-        alert("Check Out تم — عدد الساعات: " + hours.toFixed(2));
-    });
-}
 // Logout
 function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
+}
+// --------------------------
+// فتح أو إنشاء قاعدة البيانات
+// --------------------------
+let db;
+let request = indexedDB.open("OM_System_DB", 1);
 
+request.onupgradeneeded = function(e) {
+    db = e.target.result;
+    let store = db.createObjectStore("attendance", { keyPath: "id" });
+};
+
+request.onsuccess = function(e) {
+    db = e.target.result;
+    console.log("IndexedDB جاهزة");
+};
+
+request.onerror = function() {
+    console.log("خطأ في فتح IndexedDB");
+};
+
+
+// --------------------------
+// 1) تخزين Data
+// --------------------------
+function saveAttendance(data) {
+    let tx = db.transaction("attendance", "readwrite");
+    let store = tx.objectStore("attendance");
+    store.put({ id: 1, ...data });
+
+    tx.oncomplete = () => console.log("تم التخزين ✔");
+    tx.onerror = () => console.log("فشل التخزين ❌");
+}
+
+
+// --------------------------
+// 2) قراءة البيانات
+// --------------------------
+function loadAttendance(callback) {
+    let tx = db.transaction("attendance", "readonly");
+    let store = tx.objectStore("attendance");
+    let request = store.get(1);
+
+    request.onsuccess = () => callback(request.result);
+    request.onerror = () => callback(null);
+}
+
+
+// --------------------------
+// 3) استخدامه في Check In
+// --------------------------
+function checkIn() {
+    let time = new Date().toISOString();
+
+    saveAttendance({
+        username: localStorage.getItem("username"),
+        checkIn: time,
+        checkOut: null,
+        totalHours: null
+    });
+
+    alert("✔ تم تسجيل Check In");
+}
+
+
+// --------------------------
+// 4) استخدامه في Check Out + حساب الساعات
+// --------------------------
+function checkOut() {
+    loadAttendance((data) => {
+        if (!data || !data.checkIn) {
+            alert("لا يوجد Check In");
+            return;
+        }
+
+        let checkOutTime = new Date().toISOString();
+        let diff =
+            (new Date(checkOutTime) - new Date(data.checkIn)) / 1000 / 60 / 60;
+
+        saveAttendance({
+            username: data.username,
+            checkIn: data.checkIn,
+            checkOut: checkOutTime,
+            totalHours: diff.toFixed(2)
+        });
+
+        alert("✔ تم Check Out\nعدد الساعات: " + diff.toFixed(2));
+    });
 }
