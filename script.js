@@ -21,26 +21,18 @@ const ADMIN_PASSWORD = "admin_2025";
 let attendanceRecords = JSON.parse(localStorage.getItem("attendanceRecords")) || [];
 
 // تسجيل الدخول
+
 function login() {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
     const msg = document.getElementById("message");
 
+    // Admin
     if (password === ADMIN_PASSWORD) {
         localStorage.setItem("currentUser", "Admin");
         window.location.href = "admin.html";
         return;
     }
-
-    if (users[username] && users[username] === password) {
-        localStorage.setItem("currentUser", username);
-        window.location.href = "clock.html";
-        return;
-    }
-
-    msg.innerText = "❌ Wrong username or password";
-}
-
     // Admin
     if (password === ADMIN_PASSWORD) {
         localStorage.setItem("currentUser", "Admin");
@@ -146,6 +138,7 @@ function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
 }
+
 
 
 
