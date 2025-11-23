@@ -11,31 +11,8 @@ window.onload = function() {
                 });
             });
     }
-};
 
 
-// بيانات الموظفين
-const users = {
-    "sadeel": "12345",
-    "ahmad": "9999",
-    "rose": "1234",
-    "noor":"3333",
-    "mohammad":"1111",
-    "fadda":"2222",
-    "hamza":"5555",
-    "hazem":"4444",
-    "ibrahem":"6666",
-    "bashar":"7777",
-    "bader":"8888",
-    "ahmad":"3245",
-    "shade":"7890",
-    "mahmood":"4567",
-    "abdullah":"1010",
-    "bilal":"2020",
-    "hanee":"3030",
-    "saleh":"4040",
-
-};
 
 // كلمة السر للأدمن
 const ADMIN_PASSWORD = "admin_2025";
@@ -169,6 +146,7 @@ function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
 }
+
 
 
 
