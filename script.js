@@ -1,3 +1,19 @@
+let users = {}; // سيتم ملؤها من data.json
+
+// عند تحميل أي صفحة، جلب بيانات الموظفين
+window.onload = function() {
+    if(Object.keys(users).length === 0) {
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                data.employees.forEach(emp => {
+                    users[emp.name.toLowerCase()] = emp.password || ""; // كلمة السر فارغة حالياً
+                });
+            });
+    }
+};
+
+
 // بيانات الموظفين
 const users = {
     "sadeel": "12345",
@@ -138,4 +154,5 @@ function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
 }
+
 
